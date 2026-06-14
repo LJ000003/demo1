@@ -93,7 +93,6 @@ public class PhotoService {
     private void validateImageMagicBytes(InputStream in) throws IOException {
         byte[] header = new byte[12];
         int read = in.read(header);
-        in.close();
 
         if (read <= 0) {
             throw new InvalidFileTypeException("无法识别文件内容，请上传图片文件");

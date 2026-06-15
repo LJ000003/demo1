@@ -478,3 +478,65 @@ button[type="submit"]:hover,
   text-align: center;
   padding: 40px;
 }
+
+/* === 无限滚动触发区 === */
+.sentinel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 0;
+  min-height: 40px;
+}
+
+.loading-dots {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.loading-dots::after {
+  content: '';
+  display: inline-block;
+  animation: dots 1.2s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0%   { content: ''; }
+  25%  { content: '.'; }
+  50%  { content: '..'; }
+  75%  { content: '...'; }
+  100% { content: ''; }
+}
+
+.end-hint {
+  color: var(--text-dim);
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+/* === 回到顶部按钮 === */
+.back-top {
+  position: fixed;
+  right: 24px;
+  bottom: 32px;
+  z-index: 100;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  padding: 0;
+}
+.back-top:hover {
+  border-color: var(--accent);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}

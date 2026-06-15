@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import { animate } from 'animejs';
+import gsap from 'gsap';
 
 const props = defineProps({ photo: Object });
 const emit = defineEmits(['view', 'edit', 'delete']);
@@ -18,25 +18,25 @@ function tiltOn(e) {
   const rect = card.getBoundingClientRect();
   const x = (e.clientX - rect.left) / rect.width - 0.5;
   const y = (e.clientY - rect.top) / rect.height - 0.5;
-  animate(card, { rotateY: x * 8, rotateX: -y * 8, duration: 200, ease: 'out' });
+  gsap.to(card, { rotateY: x * 8, rotateX: -y * 8, duration: 0.2, overwrite: 'auto', ease: 'power1.out' });
 }
 
 function tiltOff() {
-  animate(cardRef.value, { rotateY: 0, rotateX: 0, duration: 400, ease: 'out' });
+  gsap.to(cardRef.value, { rotateY: 0, rotateX: 0, duration: 0.4, overwrite: 'auto', ease: 'power1.out' });
 }
 
 async function onDelete() {
   if (!confirm('确定要删除这张照片吗？')) return;
-  await animate(cardRef.value, {
-    scale: [1, 0.7],
-    opacity: [1, 0],
-    rotateX: [0, 40],
-    translateY: [0, -30],
-    filter: ['blur(0px)', 'blur(8px)'],
-    duration: 400,
-    ease: 'in'
+  await gsap.to(cardRef.value, {
+    scale: 0.7,
+    opacity: 0,
+    rotateX: 40,
+    y: -30,
+    filter: 'blur(8px)',
+    duration: 0.4,
+    ease: 'power1.in'
   });
-  emit('delete');
+  emit('delete', props.photo.id);
 }
 </script>
 
@@ -44,6 +44,7 @@ async function onDelete() {
   <div
     ref="cardRef"
     class="photo-card"
+    :data-insert="$attrs['data-insert']"
     @mousemove="tiltOn"
     @mouseleave="tiltOff"
   >

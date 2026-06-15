@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { animate } from 'animejs';
+import gsap from 'gsap';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
+gsap.registerPlugin(ScrollToPlugin);
 import AppHeader from './components/AppHeader.vue';
 import UploadCard from './components/UploadCard.vue';
 import PhotoGallery from './components/PhotoGallery.vue';
@@ -17,24 +19,7 @@ const totalCount = ref(0);
 const showBackTop = ref(false);
 
 function scrollToTop() {
-  const start = window.scrollY;
-  const duration = 600; // ms
-  const startTime = performance.now();
-
-  function easeOutCubic(t) {
-    return 1 - Math.pow(1 - t, 3);
-  }
-
-  function step(now) {
-    const elapsed = now - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    window.scrollTo(0, start * (1 - easeOutCubic(progress)));
-    if (progress < 1) {
-      requestAnimationFrame(step);
-    }
-  }
-
-  requestAnimationFrame(step);
+  gsap.to(window, { scrollTo: 0, duration: 0.6, ease: 'power3.out' });
 }
 
 async function loadMore() {
@@ -102,9 +87,37 @@ function initEffects() {
       <div class="orb orb-3"></div>
     </div>`;
   document.body.insertAdjacentHTML('afterbegin', orbsHTML);
-  animate('.orb-1', { translateX: ['-10%','10%','-5%','5%','-10%'], translateY: ['-5%','5%','10%','-5%','-5%'], scale: [1,1.15,0.9,1.05,1], duration: 12000, ease: 'inOut', loop: true });
-  animate('.orb-2', { translateX: ['5%','-8%','3%','-5%','5%'], translateY: ['5%','-8%','3%','5%','5%'], scale: [1,0.85,1.1,0.95,1], duration: 15000, ease: 'inOut', loop: true });
-  animate('.orb-3', { translateX: ['3%','-6%','8%','-3%','3%'], translateY: ['-5%','3%','-8%','5%','-5%'], scale: [1,1.1,0.85,1.05,1], duration: 10000, ease: 'inOut', loop: true });
+
+  gsap.to('.orb-1', {
+    keyframes: [
+      { xPercent: -10, yPercent: -5, scale: 1 },
+      { xPercent: 10, yPercent: 5, scale: 1.15 },
+      { xPercent: -5, yPercent: 10, scale: 0.9 },
+      { xPercent: 5, yPercent: -5, scale: 1.05 },
+      { xPercent: -10, yPercent: -5, scale: 1 },
+    ],
+    duration: 12, repeat: -1, ease: 'sine.inOut'
+  });
+  gsap.to('.orb-2', {
+    keyframes: [
+      { xPercent: 5, yPercent: 5, scale: 1 },
+      { xPercent: -8, yPercent: -8, scale: 0.85 },
+      { xPercent: 3, yPercent: 3, scale: 1.1 },
+      { xPercent: -5, yPercent: 5, scale: 0.95 },
+      { xPercent: 5, yPercent: 5, scale: 1 },
+    ],
+    duration: 15, repeat: -1, ease: 'sine.inOut'
+  });
+  gsap.to('.orb-3', {
+    keyframes: [
+      { xPercent: 3, yPercent: -5, scale: 1 },
+      { xPercent: -6, yPercent: 3, scale: 1.1 },
+      { xPercent: 8, yPercent: -8, scale: 0.85 },
+      { xPercent: -3, yPercent: 5, scale: 1.05 },
+      { xPercent: 3, yPercent: -5, scale: 1 },
+    ],
+    duration: 10, repeat: -1, ease: 'sine.inOut'
+  });
 
   const trails = [];
   let mouseX = 0, mouseY = 0;
@@ -144,9 +157,18 @@ function initEffects() {
     ripple.addEventListener('animationend', () => ripple.remove());
   });
 
-  animate('.header h1', { translateY: [-60,0], opacity: [0,1], duration: 1000, ease: 'outExpo' });
-  animate('.upload-card', { translateY: [40,0], opacity: [0,1], duration: 700, delay: 300, ease: 'outExpo' });
-  animate('.gallery-section h2', { translateY: [30,0], opacity: [0,1], duration: 600, delay: 500, ease: 'out' });
+  gsap.fromTo('.header h1',
+    { y: -60, opacity: 0 },
+    { y: 0, opacity: 1, duration: 1, ease: 'expo.out' }
+  );
+  gsap.fromTo('.upload-card',
+    { y: 40, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.7, delay: 0.3, ease: 'expo.out' }
+  );
+  gsap.fromTo('.gallery-section h2',
+    { y: 30, opacity: 0 },
+    { y: 0, opacity: 1, duration: 0.6, delay: 0.5, ease: 'power1.out' }
+  );
 }
 
 onMounted(() => {

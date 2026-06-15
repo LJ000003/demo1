@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { animate } from 'animejs';
+import gsap from 'gsap';
 
 const props = defineProps({ photo: Object });
 const emit = defineEmits(['close', 'saved']);
@@ -14,15 +14,24 @@ onMounted(() => {
 
   const content = document.querySelector('#editModal .modal-content');
   const backdrop = document.querySelector('#editModal .modal-backdrop');
-  animate(content, { scale: [0.85, 1], opacity: [0, 1], duration: 350, ease: 'outExpo' });
-  animate(backdrop, { opacity: [0, 1], duration: 350, ease: 'linear' });
+  gsap.fromTo(content,
+    { scale: 0.85, opacity: 0 },
+    { scale: 1, opacity: 1, duration: 0.35, ease: 'expo.out' }
+  );
+  gsap.fromTo(backdrop,
+    { opacity: 0 },
+    { opacity: 1, duration: 0.35, ease: 'none' }
+  );
 });
 
 function onClose() {
   const content = document.querySelector('#editModal .modal-content');
   const backdrop = document.querySelector('#editModal .modal-backdrop');
-  animate(content, { scale: [1, 0.9], opacity: [1, 0], duration: 200, ease: 'in' });
-  animate(backdrop, { opacity: [1, 0], duration: 200, ease: 'linear', onComplete: () => emit('close') });
+  gsap.to(content, {
+    scale: 0.9, opacity: 0, duration: 0.2, ease: 'power1.in',
+    onComplete: () => emit('close')
+  });
+  gsap.to(backdrop, { opacity: 0, duration: 0.2, ease: 'none' });
 }
 
 async function extractErrorMessage(res) {

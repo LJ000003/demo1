@@ -1,6 +1,8 @@
 <script setup>
-import { ref, nextTick } from 'vue';
-import { animate } from 'animejs';
+import { ref, nextTick, defineAsyncComponent } from 'vue';
+import gsap from 'gsap';
+
+const LottieLoader = defineAsyncComponent(() => import('./LottieLoader.vue'));
 
 const emit = defineEmits(['uploaded']);
 
@@ -30,7 +32,10 @@ function onFileChange(e) {
     previewSrc.value = ev.target.result;
     showPreview.value = true;
     nextTick(() => {
-      animate(preview.value, { scale: [0.85, 1], opacity: [0, 1], duration: 500, ease: 'outExpo' });
+      gsap.fromTo(preview.value,
+        { scale: 0.85, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out' }
+      );
     });
   };
   reader.readAsDataURL(file);
@@ -56,11 +61,13 @@ async function onSubmit() {
     uploadDesc.value = '';
     showPreview.value = false;
     if (fileInput.value) fileInput.value.value = '';
-    animate('.upload-card', {
-      borderColor: ['rgba(255,255,255,0.08)', 'rgba(0,212,255,0.6)', 'rgba(255,255,255,0.08)'],
-      boxShadow: ['0 8px 32px rgba(0,0,0,0.3)', '0 8px 32px rgba(0,0,0,0.3), 0 0 30px rgba(0,212,255,0.4)', '0 8px 32px rgba(0,0,0,0.3)'],
-      duration: 1000,
-      ease: 'outExpo'
+    gsap.to('.upload-card', {
+      keyframes: [
+        { borderColor: 'rgba(255,255,255,0.08)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' },
+        { borderColor: 'rgba(0,212,255,0.6)', boxShadow: '0 8px 32px rgba(0,0,0,0.3), 0 0 30px rgba(0,212,255,0.4)' },
+        { borderColor: 'rgba(255,255,255,0.08)', boxShadow: '0 8px 32px rgba(0,0,0,0.3)' },
+      ],
+      duration: 1, ease: 'expo.out'
     });
     emit('uploaded');
   } catch (err) {
@@ -89,7 +96,12 @@ async function onSubmit() {
       <div class="form-row">
         <input v-model="uploadName" type="text" placeholder="照片名称（可选）" />
         <input v-model="uploadDesc" type="text" maxlength="500" placeholder="照片描述（可选）" />
-        <button type="submit" :disabled="submitting">上传</button>
+        <button type="submit" :disabled="submitting">
+          <span v-if="submitting" class="btn-loading">
+            <LottieLoader name="uploading" :size="20" />
+          </span>
+          <span v-else>上传</span>
+        </button>
       </div>
     </form>
   </section>

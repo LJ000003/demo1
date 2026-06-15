@@ -8,5 +8,15 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8080'
     }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'gsap': ['gsap'],
+          'lottie': ['lottie-web']
+        }
+      }
+    }
   }
 });

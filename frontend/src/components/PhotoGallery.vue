@@ -1,7 +1,9 @@
 <script setup>
-import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { animate, stagger } from 'animejs';
+import { ref, watch, nextTick, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
+import gsap from 'gsap';
 import PhotoCard from './PhotoCard.vue';
+
+const LottieLoader = defineAsyncComponent(() => import('./LottieLoader.vue'));
 
 const props = defineProps({
   photos: { type: Array, default: () => [] },
@@ -36,13 +38,11 @@ watch(() => props.photos.length, () => {
   const newCards = props.photos.slice(prevCount);
   prevCount = props.photos.length;
   nextTick(() => {
-    animate(newCards.map((_, i) => `.photo-card[data-insert="${prevCount - newCards.length + i}"]`), {
-      translateY: [40, 0],
-      opacity: [0, 1],
-      delay: stagger(60, { from: 'first' }),
-      duration: 600,
-      ease: 'outExpo'
-    });
+    gsap.fromTo(
+      newCards.map((_, i) => `.photo-card[data-insert="${prevCount - newCards.length + i}"]`),
+      { y: 40, opacity: 0 },
+      { y: 0, opacity: 1, stagger: 0.06, duration: 0.6, ease: 'expo.out' }
+    );
   });
 });
 </script>
@@ -62,9 +62,12 @@ watch(() => props.photos.length, () => {
       />
     </div>
     <div ref="sentinel" class="sentinel">
-      <span v-if="loading" class="loading-dots">加载中</span>
+      <LottieLoader v-if="loading" name="loading" :size="60" />
       <span v-else-if="!hasMore && photos.length > 0" class="end-hint">没有更多了</span>
     </div>
-    <p v-if="!loading && photos.length === 0" class="empty-hint">还没有照片，上传第一张吧</p>
+    <div v-if="!loading && photos.length === 0" class="empty-state">
+      <LottieLoader name="empty" :size="160" />
+      <p class="empty-hint">还没有照片，上传第一张吧</p>
+    </div>
   </section>
 </template>

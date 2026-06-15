@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -87,6 +88,21 @@ public class PhotoController {
     public ApiResponse<Map<String, Integer>> migrateThumbnails() {
         int count = service.migrateThumbnails();
         return ApiResponse.success(Map.of("generated", count));
+    }
+
+    @DeleteMapping("/batch")
+    public ApiResponse<Map<String, Integer>> batchDelete(@RequestBody List<Long> ids) {
+        int count = service.batchDelete(ids);
+        return ApiResponse.success(Map.of("deleted", count));
+    }
+
+    @PostMapping("/batch")
+    public ApiResponse<List<Photo>> batchUpload(
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "description", required = false) String description)
+            throws IOException {
+        return ApiResponse.success(service.batchUpload(files, name, description));
     }
 
 }

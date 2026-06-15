@@ -14,6 +14,8 @@ const uploadDesc = ref('');
 const previewSrc = ref('');
 const showPreview = ref(false);
 const submitting = ref(false);
+const selectedCount = ref(0);
+const previews = ref([]); // { name, url }
 
 async function extractErrorMessage(res) {
   try {
@@ -25,41 +27,83 @@ async function extractErrorMessage(res) {
 }
 
 function onFileChange(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    previewSrc.value = ev.target.result;
-    showPreview.value = true;
-    nextTick(() => {
-      gsap.fromTo(preview.value,
-        { scale: 0.85, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out' }
-      );
-    });
-  };
-  reader.readAsDataURL(file);
+  const files = e.target.files;
+  revokePreviews();
+  selectedCount.value = files.length;
+  if (files.length === 0) return;
+
+  if (files.length === 1) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      previewSrc.value = ev.target.result;
+      showPreview.value = true;
+      nextTick(() => {
+        gsap.fromTo(preview.value,
+          { scale: 0.85, opacity: 0 },
+          { scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out' }
+        );
+      });
+    };
+    reader.readAsDataURL(files[0]);
+  } else {
+    showPreview.value = false;
+    previewSrc.value = '';
+    previews.value = Array.from(files).map(f => ({
+      name: f.name,
+      url: URL.createObjectURL(f)
+    }));
+  }
+}
+
+function revokePreviews() {
+  for (const p of previews.value) URL.revokeObjectURL(p.url);
+  previews.value = [];
+}
+
+function clearSelection() {
+  showPreview.value = false;
+  previewSrc.value = '';
+  selectedCount.value = 0;
+  revokePreviews();
+  if (fileInput.value) fileInput.value.value = '';
 }
 
 async function onSubmit() {
-  const file = fileInput.value.files[0];
-  if (!file) return alert('请选择一张照片');
+  const files = fileInput.value.files;
+  if (files.length === 0) return alert('请选择照片');
 
   const fd = new FormData();
-  fd.append('file', file);
+  for (const f of files) {
+    fd.append('files', f);
+  }
   fd.append('name', uploadName.value.trim());
   fd.append('description', uploadDesc.value.trim());
 
   submitting.value = true;
   try {
-    const res = await fetch('/api/photos', { method: 'POST', body: fd });
-    if (!res.ok) {
-      const msg = await extractErrorMessage(res);
-      throw new Error(msg);
+    const endpoint = files.length > 1 ? '/api/photos/batch' : '/api/photos';
+    if (files.length > 1) {
+      const res = await fetch(endpoint, { method: 'POST', body: fd });
+      if (!res.ok) {
+        const msg = await extractErrorMessage(res);
+        throw new Error(msg);
+      }
+    } else {
+      const singleFd = new FormData();
+      singleFd.append('file', files[0]);
+      singleFd.append('name', uploadName.value.trim());
+      singleFd.append('description', uploadDesc.value.trim());
+      const res = await fetch('/api/photos', { method: 'POST', body: singleFd });
+      if (!res.ok) {
+        const msg = await extractErrorMessage(res);
+        throw new Error(msg);
+      }
     }
     uploadName.value = '';
     uploadDesc.value = '';
     showPreview.value = false;
+    selectedCount.value = 0;
+    revokePreviews();
     if (fileInput.value) fileInput.value.value = '';
     gsap.to('.upload-card', {
       keyframes: [
@@ -72,9 +116,7 @@ async function onSubmit() {
     emit('uploaded');
   } catch (err) {
     alert('上传失败: ' + err.message);
-    showPreview.value = false;
-    previewSrc.value = '';
-    if (fileInput.value) fileInput.value.value = '';
+    clearSelection();
   } finally {
     submitting.value = false;
   }
@@ -86,12 +128,18 @@ async function onSubmit() {
     <h2>上传照片</h2>
     <form @submit.prevent="onSubmit">
       <div class="file-area">
-        <input ref="fileInput" type="file" id="fileInput" accept="image/*" @change="onFileChange" />
+        <input ref="fileInput" type="file" id="fileInput" accept="image/*" multiple @change="onFileChange" />
         <label ref="fileLabel" for="fileInput" :class="{ 'preview-hidden': showPreview }">
           <span class="file-icon">+</span>
-          <span>点击选择图片</span>
+          <span>{{ selectedCount > 0 ? `已选 ${selectedCount} 张` : '点击选择图片（支持多选）' }}</span>
         </label>
         <img ref="preview" v-if="showPreview" :src="previewSrc" alt="预览" />
+      </div>
+      <div v-if="previews.length > 0" class="preview-grid">
+        <div v-for="p in previews" :key="p.name" class="preview-item">
+          <img :src="p.url" :alt="p.name" />
+          <span>{{ p.name }}</span>
+        </div>
       </div>
       <div class="form-row">
         <input v-model="uploadName" type="text" placeholder="照片名称（可选）" />
@@ -100,7 +148,10 @@ async function onSubmit() {
           <span v-if="submitting" class="btn-loading">
             <LottieLoader name="uploading" :size="20" />
           </span>
-          <span v-else>上传</span>
+          <span v-else>{{ selectedCount > 1 ? `上传 (${selectedCount})` : '上传' }}</span>
+        </button>
+        <button v-if="selectedCount > 0" type="button" class="btn-clear" @click="clearSelection">
+          取消选择
         </button>
       </div>
     </form>

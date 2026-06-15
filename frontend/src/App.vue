@@ -69,6 +69,26 @@ async function onDelete(id) {
       throw new Error(msg);
     }
     photos.value = photos.value.filter(p => p.id !== id);
+    totalCount.value--;
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function onBatchDelete(ids) {
+  try {
+    const res = await fetch('/api/photos/batch', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ids)
+    });
+    if (!res.ok) {
+      const msg = await extractErrorMessage(res);
+      throw new Error(msg);
+    }
+    const idSet = new Set(ids);
+    photos.value = photos.value.filter(p => !idSet.has(p.id));
+    totalCount.value -= ids.length;
   } catch (err) {
     alert(err.message);
   }
@@ -199,6 +219,7 @@ onMounted(() => {
       @edit="onEdit"
       @delete="onDelete"
       @load-more="loadMore"
+      @batch-delete="onBatchDelete"
     />
   </main>
   <button v-show="showBackTop" class="back-top" @click="scrollToTop" title="回到顶部">

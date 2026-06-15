@@ -161,6 +161,36 @@ public class PhotoService {
         repo.delete(photo);
     }
 
+    public int batchDelete(List<Long> ids) {
+        int count = 0;
+        for (Long id : ids) {
+            try {
+                Photo photo = repo.findById(id).orElse(null);
+                if (photo == null) continue;
+                Files.deleteIfExists(uploadDir.resolve(photo.getFileName()));
+                // 同时删除缩略图
+                String fn = photo.getFileName();
+                int lastSlash = fn.lastIndexOf('/');
+                String dateDir = fn.substring(0, lastSlash);
+                String baseName = fn.substring(lastSlash + 1);
+                Files.deleteIfExists(uploadDir.resolve(dateDir).resolve("thumbnails").resolve(baseName));
+                repo.delete(photo);
+                count++;
+            } catch (IOException ignored) {
+            }
+        }
+        return count;
+    }
+
+    public List<Photo> batchUpload(List<MultipartFile> files, String name, String description) throws IOException {
+        List<Photo> results = new java.util.ArrayList<>();
+        for (MultipartFile file : files) {
+            if (file.isEmpty()) continue;
+            results.add(upload(file, name, description));
+        }
+        return results;
+    }
+
     public int migrateThumbnails() {
         List<Photo> all = repo.findAll();
         int count = 0;

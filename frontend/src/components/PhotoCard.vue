@@ -2,8 +2,8 @@
 import { ref } from 'vue';
 import gsap from 'gsap';
 
-const props = defineProps({ photo: Object });
-const emit = defineEmits(['view', 'edit', 'delete']);
+const props = defineProps({ photo: Object, selected: Boolean });
+const emit = defineEmits(['view', 'edit', 'delete', 'toggle-select']);
 
 const cardRef = ref(null);
 
@@ -44,10 +44,14 @@ async function onDelete() {
   <div
     ref="cardRef"
     class="photo-card"
+    :class="{ selected: selected }"
     :data-insert="$attrs['data-insert']"
     @mousemove="tiltOn"
     @mouseleave="tiltOff"
   >
+    <div class="card-check" @click.stop="emit('toggle-select', photo.id)">
+      <span class="check-mark" v-if="selected">✓</span>
+    </div>
     <div class="photo-thumb" @click="$emit('view')">
       <img :src="`/api/photos/${photo.id}/thumbnail`" :alt="photo.name" loading="lazy" />
       <div class="photo-overlay">

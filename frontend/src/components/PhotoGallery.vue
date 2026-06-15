@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import gsap from 'gsap';
 import PhotoCard from './PhotoCard.vue';
 
@@ -11,10 +11,56 @@ const props = defineProps({
   hasMore: { type: Boolean, default: false },
   totalCount: { type: Number, default: 0 }
 });
-const emit = defineEmits(['view', 'edit', 'delete', 'loadMore']);
+const emit = defineEmits(['view', 'edit', 'delete', 'loadMore', 'batch-delete']);
 
 const sentinel = ref(null);
 let observer = null;
+
+const selectedIds = ref(new Set());
+
+function isSelected(id) {
+  return selectedIds.value.has(id);
+}
+
+function toggleSelect(id) {
+  const s = selectedIds.value;
+  if (s.has(id)) s.delete(id);
+  else s.add(id);
+  selectedIds.value = new Set(s); // trigger reactivity
+}
+
+const allSelected = computed(() =>
+  props.photos.length > 0 && props.photos.every(p => selectedIds.value.has(p.id))
+);
+
+function toggleAll() {
+  if (allSelected.value) {
+    selectedIds.value = new Set();
+  } else {
+    selectedIds.value = new Set(props.photos.map(p => p.id));
+  }
+}
+
+function batchDelete() {
+  if (selectedIds.value.size === 0) return;
+  const ids = [...selectedIds.value];
+  if (!confirm(`确定要删除选中的 ${ids.length} 张照片吗？`)) return;
+  emit('batch-delete', ids);
+  selectedIds.value = new Set();
+}
+
+// 当照片列表变化时清理无效的选中 ID
+watch(() => props.photos, () => {
+  const currentIds = new Set(props.photos.map(p => p.id));
+  let changed = false;
+  for (const id of selectedIds.value) {
+    if (!currentIds.has(id)) { changed = true; break; }
+  }
+  if (changed) {
+    const filtered = new Set([...selectedIds.value].filter(id => currentIds.has(id)));
+    selectedIds.value = filtered;
+  }
+});
 
 onMounted(() => {
   observer = new IntersectionObserver(([entry]) => {
@@ -50,15 +96,26 @@ watch(() => props.photos.length, () => {
 <template>
   <section class="gallery-section">
     <h2>我的照片 <span v-if="totalCount">({{ totalCount }})</span></h2>
+    <div class="gallery-toolbar">
+      <label>
+        <input type="checkbox" :checked="allSelected" @change="toggleAll" />
+        全选
+      </label>
+      <button v-if="selectedIds.size > 0" class="btn-del" @click="batchDelete">
+        批量删除 ({{ selectedIds.size }})
+      </button>
+    </div>
     <div class="gallery">
       <PhotoCard
         v-for="(p, i) in photos"
         :key="p.id"
         :photo="p"
+        :selected="isSelected(p.id)"
         :data-insert="i"
         @view="emit('view', p)"
         @edit="emit('edit', p)"
         @delete="emit('delete', p.id)"
+        @toggle-select="toggleSelect"
       />
     </div>
     <div ref="sentinel" class="sentinel">

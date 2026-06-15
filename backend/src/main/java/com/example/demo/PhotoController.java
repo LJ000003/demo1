@@ -1,10 +1,12 @@
 package com.example.demo;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,8 +33,8 @@ public class PhotoController {
     }
 
     @GetMapping
-    public List<Photo> list() {
-        return service.listAll();
+    public ApiResponse<Page<Photo>> list(@PageableDefault(size = 20) Pageable pageable) {
+        return ApiResponse.success(service.listAll(pageable));
     }
 
     @GetMapping("/{id}")

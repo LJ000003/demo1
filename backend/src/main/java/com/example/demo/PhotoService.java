@@ -7,10 +7,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,8 +32,8 @@ public class PhotoService {
         }
     }
 
-    public List<Photo> listAll() {
-        return repo.findAll();
+    public Page<Photo> listAll(Pageable pageable) {
+        return repo.findAll(pageable);
     }
 
     public Photo getById(Long id) {

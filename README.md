@@ -273,6 +273,70 @@ curl -X POST http://localhost:8080/api/photos/migrate-thumbnails
 
 浏览器访问 `http://<服务器IP>`，应看到照片管理页面。上传一张图片测试功能正常即可。
 
+---
+
+## Docker 一键部署（推荐）
+
+无需安装 JDK、Maven、MySQL，一个命令启动全部服务。
+
+### 前置条件
+
+仅需安装 Docker：
+
+```bash
+# Linux
+curl -fsSL https://get.docker.com | sh
+
+# Windows / macOS
+# 安装 Docker Desktop: https://www.docker.com/products/docker-desktop/
+```
+
+### 1. 构建
+
+```bash
+# 前端
+cd frontend && npm run build
+
+# 复制前端到后端静态目录（PowerShell）
+Remove-Item -Recurse -Force ..\backend\src\main\resources\static\*
+Copy-Item -Recurse -Force dist\* ..\backend\src\main\resources\static\
+
+# 后端打包
+cd ..\backend && mvn clean package -DskipTests
+```
+
+### 2. 启动
+
+```bash
+cd .. && docker compose up -d
+```
+
+Docker Compose 会自动：
+- 拉取 MySQL 8.0 镜像并创建 `photodb` 数据库
+- 用 `Dockerfile` 构建应用镜像
+- 配置容器间网络，应用通过 `DB_HOST=mysql` 连接数据库
+- 挂载数据卷保证数据持久化
+
+### 3. 管理
+
+```bash
+docker compose ps          # 查看运行状态
+docker compose logs -f app # 查看应用日志
+docker compose stop        # 停止
+docker compose start       # 再次启动
+docker compose down        # 停止并删除容器（数据卷保留）
+docker compose down -v     # 停止并清除所有数据
+```
+
+### 文件说明
+
+| 文件 | 作用 |
+|------|------|
+| `backend/Dockerfile` | 基于 `eclipse-temurin:17-jre-alpine`，复制 JAR 并启动 |
+| `docker-compose.yml` | 编排 `app` + `mysql` 两个服务，配置网络、数据卷、健康检查 |
+
+---
+
 ## Spring Profile
 
 | 文件                     | 环境 | 说明                                       |

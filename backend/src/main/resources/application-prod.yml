@@ -9,3 +9,6 @@ spring:
 
 photo:
   upload-dir: /data/photo-uploads
+
+admin:
+  password: ${ADMIN_PASSWORD}

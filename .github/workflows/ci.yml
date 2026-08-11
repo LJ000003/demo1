@@ -51,7 +51,7 @@ jobs:
         with:
           node-version: '22'
       # 复用 frontend job 的 dist 产物（copy-dist 在 mvn test 前执行无碍，static 含 dist 不影响测试）
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: frontend-dist
           path: frontend/dist
@@ -74,7 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # JAR 由 backend job 产出，本 job 不再需要 setup-java/setup-node 与任何构建
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: backend-jar
           path: backend/target
@@ -92,7 +92,7 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       # JAR 由 backend job 产出（e2e 前端走 Vite dev server，JAR 不需要内嵌前端资源）
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: backend-jar
           path: backend/target

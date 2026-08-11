@@ -27,7 +27,7 @@ jobs:
       - run: npm run lint
       - run: npm run build
       # dist 产物供 backend job 打含前端静态资源的最终 JAR
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist
@@ -61,7 +61,7 @@ jobs:
       - run: mvn spotbugs:check --batch-mode
       - run: mvn package -DskipTests --batch-mode
       # 含前端静态资源的最终 JAR，供 docker/e2e job 直接使用
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: backend-jar
           path: backend/target/*.jar
